@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
-from nfe.experiments.gru_ode_bayes.lib.data_utils import ITSDataset
+from nfe.experiments.gru_ode_bayes.lib.data_utils import ITSDataset, SPEECHDataset
 
 DATA_DIR = Path('/opt/ml/input/data/training')
 if DATA_DIR.exists():
@@ -80,9 +80,14 @@ def get_speech_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
     npz = np.load(SPEECH_FILE)
     train = npz["train_evals"]
     test = npz["test_evals"]
+    # print("speech data loaded\n train: ", train.shape, "test", test.shape)
     
-    val = None
+    val = test
     value_cols = None
+
+    train = SPEECHDataset(train)
+    val = SPEECHDataset(val)
+    test = SPEECHDataset(test)
 
     return train, val, test, value_cols
 

@@ -34,19 +34,21 @@ class GOB(BaseExperiment):
             dl_val = DataLoader(dataset=val, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
             dl_test = DataLoader(dataset=test, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
         else:
-            dl_train = DataLoader(dataset=train, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
-            dl_val = DataLoader(dataset=val, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
-            dl_test = DataLoader(dataset=test, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
+            dl_train = DataLoader(dataset=train, collate_fn=collate_SPEECH, shuffle=True, batch_size=args.batch_size)
+            dl_val = DataLoader(dataset=val, collate_fn=collate_SPEECH, shuffle=True, batch_size=args.batch_size)
+            dl_test = DataLoader(dataset=test, collate_fn=collate_SPEECH, shuffle=True, batch_size=args.batch_size)
 
+        print(train)
         self.test_dataset = test
         self.val_dataset = val
-        self.value_cols = value_cols.columns
+        # self.value_cols = value_cols.columns
         self.input_size = train.variable_num
-        self.cov_size = train.init_cov_dim
+        # self.cov_size = train.init_cov_dim
+        self.cov_size = 1
         self.dl_val = dl_val
         self.dl_test = dl_test
 
-        return train.variable_num, 0, dl_train, dl_val, dl_test
+        return self.input_size, 0, dl_train, dl_val, dl_test
 
     def training_step(self, b):
         _, loss, _, _, _ = self.model(b['times'], b['num_obs'], b['X'].to(self.device), b['M'].to(self.device),

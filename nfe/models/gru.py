@@ -72,6 +72,9 @@ class GRUFlowBlock(Module):
         self.beta = 4 / 5
 
     def residual(self, h, t):
+        print(h.shape)
+        print(t.shape)
+        # exit()
         inp = torch.cat([h, t], -1)
         r = self.beta * torch.sigmoid(self.lin_hr(inp))
         z = self.alpha * torch.sigmoid(self.lin_hz(inp))
@@ -117,6 +120,8 @@ class GRUFlow(Module):
         self.layers = torch.nn.ModuleList(layers)
 
     def forward(self, x: Tensor, t: Tensor) -> Tensor:
+        # print("gru.py x,t :", x.shape, t.shape)
+        # exit()
         if x.shape[-2] != t.shape[-2]:
             x = x.repeat_interleave(t.shape[-2], dim=-2)
 

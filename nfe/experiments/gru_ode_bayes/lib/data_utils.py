@@ -91,12 +91,16 @@ class SPEECHDataset(Dataset):
     def __init__(self, in_npz):
         self.npz = in_npz
         self.length = self.npz.shape[0]
+        self.variable_num = self.npz.shape[-1]
+        self.init_cov_dim = self.npz.shape[1] - 1
+        # self.init_cov_dim = 1
     
     def __len__(self):
         return self.length
     
     def __getitem__(self, idx):
         subset = self.npz[idx]
+        # print("Datset subset :", subset.shape)
         tag = None
         init_covs = 0
         val_samples = None
@@ -158,19 +162,26 @@ def collate_SPEECH(batch):
     Collate function used in the DataLoader to format data for GRU-ODE-Bayes,
     taken from https://github.com/edebrouwer/gru_ode_bayes
     """
-    subset = batch["path"]    
-    times = torch.ones_like(subset)
+    subset = torch.stack([torch.tensor(b["path"]) for b in batch], 0)
+    times = torch.ones_like(subset[:,:,0])
     times = torch.cumsum(times, dim = 0)
+    # print("time shape:", times.shape)
+
+    # exit()
     num_observations = [len(x) for x in times]
+    # print("num_observations: ", num_observations)
+    cov_shape = torch.unsqueeze(subset[0,:,0], -1)
+    # print("cov shape", cov_shape.shape)
 
 
     res = dict()
     res['times'] = np.array(times, dtype=object)
     res['num_obs'] = torch.Tensor(num_observations)
     res['X'] = torch.tensor(subset)
-    res['M'] = torch.one_like(subset)
+    res['M'] = torch.ones_like(subset)
     res['y'] = None
-    res['cov'] = torch.zeros_like(subset.shape[0])
+    # res['cov'] = torch.zeros_like(cov_shape)
+    res['cov'] = torch.zeros((50,1))
     res['X_val'] = None
     res['M_val'] = None
     res['times_val'] = None
