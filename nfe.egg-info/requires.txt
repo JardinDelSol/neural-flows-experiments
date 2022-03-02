@@ -1,0 +1,12 @@
+numpy
+pandas
+matplotlib
+scipy
+sklearn
+tqdm
+stribor==0.1.0
+torch>=1.8.0
+torchvision
+torchdiffeq
+reverse_geocoder
+lxml
