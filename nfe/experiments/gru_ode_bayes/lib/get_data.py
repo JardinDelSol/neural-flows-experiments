@@ -1,10 +1,10 @@
 import pandas as pd
+import numpy as np
 
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
 from nfe.experiments.gru_ode_bayes.lib.data_utils import ITSDataset
-
 
 DATA_DIR = Path('/opt/ml/input/data/training')
 if DATA_DIR.exists():
@@ -16,6 +16,7 @@ else:
     MIMIC4_FILE = Path(__file__).parents[2] / 'data/mimic4/mimic4_full_dataset.csv'
     MIMIC3_FILE_LONG = Path(__file__).parents[2] / 'data/mimic3/mimic3_full_dataset_long.csv'
     MIMIC4_FILE_LONG = Path(__file__).parents[2] / 'data/mimic4/mimic4_full_dataset_long.csv'
+    SPEECH_FILE = Path(__file__).parents[2] / 'data/tpp/speech_commands.npz'
 
 
 def get_OU_data(t_val=4, max_val_samples=1):
@@ -74,6 +75,16 @@ def get_MIMIC_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
         return train, val, test, value_cols
     else:
         return train, val, test
+
+def get_speech_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
+    npz = np.load(SPEECH_FILE)
+    train = npz["train_evals"]
+    test = npz["test_evals"]
+    
+    val = None
+    value_cols = None
+
+    return train, val, test, value_cols
 
 
 def get_MIMIC_data_long(idx, value_cols, name, t_val=2.160, t_stop=3.600, max_val_samples=5):
