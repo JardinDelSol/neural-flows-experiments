@@ -38,7 +38,6 @@ class GOB(BaseExperiment):
             dl_val = DataLoader(dataset=val, collate_fn=collate_SPEECH, shuffle=True, batch_size=args.batch_size)
             dl_test = DataLoader(dataset=test, collate_fn=collate_SPEECH, shuffle=True, batch_size=args.batch_size)
 
-        print(train)
         self.test_dataset = test
         self.val_dataset = val
         # self.value_cols = value_cols.columns

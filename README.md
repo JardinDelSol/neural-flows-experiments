@@ -9,7 +9,10 @@ Marin Biloš, Johanna Sommer, Syama Sundar Rangapuram, Tim Januschowski, Stephan
 *Abstract*: Neural ordinary differential equations describe how values change in time. This is the reason why they gained importance in modeling sequential data, especially when the observations are made at irregular intervals. In this paper we propose an alternative by directly modeling the solution curves - the flow of an ODE - with a neural network. This immediately eliminates the need for expensive numerical solvers while still maintaining the modeling capability of neural ODEs. We propose several flow architectures suitable for different applications by establishing precise conditions on when a function defines a valid flow. Apart from computational efficiency, we also provide empirical evidence of favorable generalization performance via applications in time series modeling, forecasting, and density estimation.
 
 This repository acts as a supplementary material which implements the models and experiments as described in the main paper. The definition of models relies on the [stribor](https://github.com/mbilos/stribor) package for normalizing and neural flows. The baselines use [torchdiffeq](https://github.com/rtqichen/torchdiffeq) package for differentiable ODE solvers.
-
+## Test with speech
+```
+python -m nfe.train --experiment gru_ode_bayes --data speech --model flow --odenet gru --flow-model gru --hidden-dim 50 
+```
 
 ## Installation
 
