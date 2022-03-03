@@ -94,7 +94,8 @@ class SPEECHDataset(Dataset):
         self.variable_num = self.npz.shape[-1]
         self.init_cov_dim = self.npz.shape[1] - 1
         # self.init_cov_dim = 1
-    
+
+
     def __len__(self):
         return self.length
     
@@ -164,11 +165,14 @@ def collate_SPEECH(batch):
     """
     subset = torch.stack([torch.tensor(b["path"]) for b in batch], 0)
     times = torch.ones_like(subset[:,:,0])
-    times = torch.cumsum(times, dim = 0)
-    # print("time shape:", times.shape)
+    times = torch.cumsum(times, dim = 1)
+    print("time shape:", times.shape)
+    print(times)
 
     # exit()
-    num_observations = [len(x) for x in times]
+    # num_observations = [54 for x in range(50)]
+    num_observations = [54] * 50
+    print("len num obs:", len(num_observations))
     # print("num_observations: ", num_observations)
     cov_shape = torch.unsqueeze(subset[0,:,0], -1)
     # print("cov shape", cov_shape.shape)
@@ -178,6 +182,8 @@ def collate_SPEECH(batch):
     res['times'] = np.array(times, dtype=object)
     res['num_obs'] = torch.Tensor(num_observations)
     res['X'] = torch.tensor(subset)
+    print(res["X"].shape)
+    # exit()
     res['M'] = torch.ones_like(subset)
     res['y'] = None
     # res['cov'] = torch.zeros_like(cov_shape)

@@ -60,7 +60,7 @@ class NNFOwithBayesianJumps(nn.Module):
     def forward(self, times, num_obs, X, M, delta_t, cov, val_times,
                 return_path=False, smoother = False, class_criterion = None, labels=None):
 
-        print("cov shape", cov.shape)
+        # print("cov shape", cov.shape)
         h = self.covariates_map(cov)
         p = self.p_model(h)
         num_obs = num_obs.to(h.device)
@@ -72,6 +72,7 @@ class NNFOwithBayesianJumps(nn.Module):
         last_times = torch.zeros((len(num_obs)))
         for ind in range(0, int(torch.max(num_obs).item())):
             idx = num_obs > ind
+            print("ind, idx: ", ind, idx)
             current_times = torch.Tensor([x[ind] for x in times[idx.cpu()]])
             # print(last_times[idx].shape)
             # exit()
@@ -79,11 +80,11 @@ class NNFOwithBayesianJumps(nn.Module):
             diff = current_times - last_times[idx]
 
             # print("diff shape: ", diff.shape)
-            print(h.unsqueeze(1).shape)
-            print(h[idx].shape)
+            # print(h.unsqueeze(1).shape)
+            # print(h[idx].shape)
             # print(h)
             # print(idx)
-            print(diff.view(-1, 1,1).shape)
+            # print(diff.view(-1, 1,1).shape)
             
             solution = self.odeint(h[idx].unsqueeze(1), diff.view(-1, 1, 1).to(h.device))
             temp = h.clone()
@@ -94,6 +95,7 @@ class NNFOwithBayesianJumps(nn.Module):
             zero_tens = torch.Tensor([0]).to(h.device)
 
             print(torch.cat((zero_tens, torch.cumsum(num_obs, dim=0)))[:-1][idx] + ind)
+            print(X.shape)
             # exit()
             X_slice = X[(torch.cat((zero_tens, torch.cumsum(num_obs, dim=0)))[:-1][idx] + ind).long()]
             M_slice = M[(torch.cat((zero_tens, torch.cumsum(num_obs, dim=0)))[:-1][idx] + ind).long()]
