@@ -43,7 +43,7 @@ class NNFOwithBayesianJumps(nn.Module):
         self.mixing = mixing
         self.gru_obs = GRUObservationCellLogvar(input_size, args.hidden_dim, prep_hidden, bias=True)
 
-        print("cov_size", cov_size, "cov_hidden", cov_hidden)
+        # print("cov_size", cov_size, "cov_hidden", cov_hidden)
 
         self.covariates_map = nn.Sequential(
             nn.Linear(cov_size, cov_hidden, bias=True),
@@ -72,20 +72,9 @@ class NNFOwithBayesianJumps(nn.Module):
         last_times = torch.zeros((len(num_obs)))
         for ind in range(0, int(torch.max(num_obs).item())):
             idx = num_obs > ind
-            print("ind, idx: ", ind, idx)
             current_times = torch.Tensor([x[ind] for x in times[idx.cpu()]])
-            # print(last_times[idx].shape)
-            # exit()
-
             diff = current_times - last_times[idx]
-
-            # print("diff shape: ", diff.shape)
-            # print(h.unsqueeze(1).shape)
-            # print(h[idx].shape)
-            # print(h)
-            # print(idx)
-            # print(diff.view(-1, 1,1).shape)
-            
+   
             solution = self.odeint(h[idx].unsqueeze(1), diff.view(-1, 1, 1).to(h.device))
             temp = h.clone()
             temp[idx] = solution.squeeze(1)
@@ -94,9 +83,6 @@ class NNFOwithBayesianJumps(nn.Module):
 
             zero_tens = torch.Tensor([0]).to(h.device)
 
-            print(torch.cat((zero_tens, torch.cumsum(num_obs, dim=0)))[:-1][idx] + ind)
-            print(X.shape)
-            # exit()
             X_slice = X[(torch.cat((zero_tens, torch.cumsum(num_obs, dim=0)))[:-1][idx] + ind).long()]
             M_slice = M[(torch.cat((zero_tens, torch.cumsum(num_obs, dim=0)))[:-1][idx] + ind).long()]
 

@@ -62,12 +62,15 @@ class BaseExperiment:
 
             # Validation step
             self.model.eval()
-            val_loss = self.validation_step()
-            self.logger.info(f'[epoch={epoch+1:04d}] val_loss={val_loss:.5f}')
+            # val_loss = self.validation_step()
+            # self.logger.info(f'[epoch={epoch+1:04d}] val_loss={val_loss:.5f}')
+            val_loss = self.test_step()
+            self.logger.info(f'val_loss={val_loss:.5f}')
 
             # Learning rate scheduler
             if self.scheduler:
                 self.scheduler.step()
+            
 
             # Early stopping procedure
             if val_loss < best_loss:

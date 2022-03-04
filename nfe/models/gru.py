@@ -72,8 +72,8 @@ class GRUFlowBlock(Module):
         self.beta = 4 / 5
 
     def residual(self, h, t):
-        print(h.shape)
-        print(t.shape)
+        # print(h.shape)
+        # print(t.shape)
         # exit()
         inp = torch.cat([h, t], -1)
         r = self.beta * torch.sigmoid(self.lin_hr(inp))

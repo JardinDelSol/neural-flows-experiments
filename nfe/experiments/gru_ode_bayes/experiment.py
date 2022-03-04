@@ -40,12 +40,13 @@ class GOB(BaseExperiment):
 
         self.test_dataset = test
         self.val_dataset = val
-        # self.value_cols = value_cols.columns
+        self.value_cols = value_cols
         self.input_size = train.variable_num
         # self.cov_size = train.init_cov_dim
         self.cov_size = 1
         self.dl_val = dl_val
         self.dl_test = dl_test
+
 
         return self.input_size, 0, dl_train, dl_val, dl_test
 

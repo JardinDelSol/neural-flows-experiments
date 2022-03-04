@@ -47,7 +47,6 @@ def get_MIMIC_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
 
     full_data.loc[:, 'Time'] = full_data['Time'] / 1000
 
-
     value_cols = [c.startswith('Value') for c in full_data.columns]
     value_cols = full_data.iloc[:, value_cols]
     mask_cols = [('Mask' + x[5:]) for x in value_cols]
@@ -71,9 +70,15 @@ def get_MIMIC_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
     train_idx, eval_idx = train_test_split(full_data.index.unique(), test_size=0.3, random_state=0)
     val_idx, test_idx = train_test_split(full_data.loc[eval_idx].index.unique(), test_size=0.5, random_state=0)
 
+    # print(len(full_data.loc[train_idx].index))
+    # exit()
+
+
+
     train = ITSDataset(in_df=full_data.loc[train_idx].reset_index())
     val = ITSDataset(in_df=full_data.loc[val_idx].reset_index(), validation=True, val_options=val_options)
     test = ITSDataset(in_df=full_data.loc[test_idx].reset_index(), validation=True, val_options=val_options)
+
 
     if return_vc:
         return train, val, test, value_cols
@@ -84,10 +89,17 @@ def get_speech_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
     npz = np.load(SPEECH_FILE)
     train = npz["train_evals"]
     test = npz["test_evals"]
+    
+    b, t, d = train.shape
+    # train = train.reshape(b * t, d)
+
+    # b, t, d = test.shape
+    # test = test.reshape(b * t, d)
+
     # print("speech data loaded\n train: ", train.shape, "test", test.shape)
     
     val = test
-    value_cols = None
+    value_cols = np.arange(d)
 
     train = SPEECHDataset(train)
     val = SPEECHDataset(val)
