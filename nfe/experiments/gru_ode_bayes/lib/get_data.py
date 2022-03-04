@@ -12,7 +12,7 @@ if DATA_DIR.exists():
     MIMIC3_FILE = MIMIC4_FILE = DATA_DIR / 'full_dataset.csv'
 else:
     OU_FILE = Path(__file__).parents[2] / 'data/2dou/2dou.csv'
-    MIMIC3_FILE = Path(__file__).parents[2] / 'data/mimic3/mimic3_full_dataset.csv'
+    MIMIC3_FILE = Path(__file__).parents[2] / 'data/mimic3/full_dataset.csv'
     MIMIC4_FILE = Path(__file__).parents[2] / 'data/mimic4/mimic4_full_dataset.csv'
     MIMIC3_FILE_LONG = Path(__file__).parents[2] / 'data/mimic3/mimic3_full_dataset_long.csv'
     MIMIC4_FILE_LONG = Path(__file__).parents[2] / 'data/mimic4/mimic4_full_dataset_long.csv'
@@ -42,7 +42,11 @@ def get_MIMIC_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
     else:
         raise NotImplementedError()
     full_data = full_data.set_index('ID')
+    # print(full_data.dtypes)
+    full_data["Time"] = full_data['Time'].map(lambda x: pd.to_timedelta(x).seconds)
+
     full_data.loc[:, 'Time'] = full_data['Time'] / 1000
+
 
     value_cols = [c.startswith('Value') for c in full_data.columns]
     value_cols = full_data.iloc[:, value_cols]
