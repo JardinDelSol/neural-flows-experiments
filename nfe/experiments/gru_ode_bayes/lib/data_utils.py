@@ -42,6 +42,7 @@ class ITSDataset(Dataset):
         map_dict = dict(zip(self.df.loc[:, 'ID'].unique(), np.arange(self.df.loc[:, 'ID'].nunique())))
         self.map_dict = map_dict
         self.df.loc[:, 'ID'] = self.df.loc[:, 'ID'].map(map_dict)
+
         self.init_cov_df.loc[:, 'ID'] = self.init_cov_df.loc[:, 'ID'].map(map_dict)
         self.label_df.loc[:, 'ID'] = self.label_df['ID'].map(map_dict)
 
@@ -77,6 +78,8 @@ class ITSDataset(Dataset):
 
     def __getitem__(self, idx):
         subset = self.df.loc[idx]
+        # print(subset.shape)
+        # exit()
         if len(subset.shape) == 1:
             subset = self.df.loc[[idx]]
         init_covs = self.init_cov_df.loc[idx].values
@@ -87,6 +90,41 @@ class ITSDataset(Dataset):
             val_samples = None
         return {'idx': idx, 'y': tag, 'path': subset, 'init_cov': init_covs, 'val_samples': val_samples}
 
+class SPEECHDataset(Dataset):
+    def __init__(self, in_npz, validation=False, val_options=None):
+        self.npz = in_npz
+        self.length = self.npz.shape[0]
+        self.variable_num = self.npz.shape[-1]
+        self.init_cov_dim = 1
+        self.validation = validation
+
+        if self.validation:
+            assert val_options is not None, 'Validation set options should be fed'
+            self.df_before = self.df.loc[self.df['Time'] <= val_options['T_val']].copy()
+            self.df_after = self.df.loc[self.df['Time'] > val_options['T_val']].sort_values('Time').copy()
+            if val_options.get("T_stop"):
+                self.df_after = self.df_after.loc[self.df_after['Time'] < val_options['T_stop']].sort_values('Time').copy()
+            self.df_after = self.df_after.groupby('ID').head(val_options['max_val_samples']).copy()
+            self.df = self.df_before  # We remove observations after T_val
+            self.df_after.ID = self.df_after.ID.astype(np.int)
+            self.df_after.sort_values('Time', inplace=True)
+
+    def __len__(self):
+        return self.length
+    
+    def __getitem__(self, idx):
+        subset = self.npz[idx]
+        # print(subset.shape)
+        # exit()
+        # print("Datset subset :", subset.shape)
+        tag = None
+        init_covs = 0
+        if self.validation:
+            val_samples = True
+        else:
+            val_samples = None
+        return {'idx': idx, 'y': tag, 'path': subset, 'init_cov': init_covs, 'val_samples': val_samples}
+        
 
 def collate_GOB(batch):
     """
@@ -125,6 +163,9 @@ def collate_GOB(batch):
         x_val = None
         m_val = None
         times_val = None
+    
+    # print(times.shape)
+    print(times)
 
     res = dict()
     res['times'] = np.array(times, dtype=object)
@@ -136,8 +177,72 @@ def collate_GOB(batch):
     res['X_val'] = x_val
     res['M_val'] = m_val
     res['times_val'] = times_val
+
+    # print(res['times'].shape)
+    # print(res['times'])
+    # exit()
+
+    for k in res.keys():
+        print(k)
+        try:
+            print(res[k].shape)
+        except:
+            print(res[k])
+    # exit()
+    
+
     return res
 
+def collate_SPEECH(batch):
+    """
+    Collate function used in the DataLoader to format data for GRU-ODE-Bayes,
+    taken from https://github.com/edebrouwer/gru_ode_bayes
+    """
+    subset = torch.stack([torch.tensor(b["path"]) for b in batch], 0)
+    b, t, d = subset.shape
+    # times1d = np.ones((b,54))
+    # times = np.cumsum(times, axis = 1)
+
+    times1d = np.array(np.arange(54)).astype(np.float32)
+    times = [times1d for i in range(b)]
+
+    num_observations = [54] * b
+
+    if batch[0]['val_samples']:
+        x_val = subset[:, 48:, :]
+        m_val = torch.ones_like(x_val)
+        times_val = 
+
+    subset = torch.reshape(subset, (b * t, d))
+    
+
+    # print(times)
+
+    res = dict()
+    res['times'] = np.array(times, dtype=object)
+    res['num_obs'] = torch.Tensor(num_observations)
+    res['X'] = torch.tensor(subset)
+    res['M'] = torch.ones_like(subset)
+    res['y'] = torch.zeros((b,1))
+    res['cov'] = torch.zeros((b,1))
+    res['X_val'] = None
+    res['M_val'] = None
+    res['times_val'] = None
+    
+    # print(res['times'].shape)
+    # print(res['times'])
+    # exit()
+
+    # for k in res.keys():
+    #     print(k)
+    #     try:
+    #         print(res[k].shape)
+    #     except:
+    #         print(res[k])
+    # exit()
+
+    
+    return res
 
 def compute_corr(x_true, x_hat, mask):
     means_true = x_true.sum(0) / mask.sum(0)

@@ -10,6 +10,10 @@ from nfe.experiments.stpp.experiment import STPP
 from nfe.experiments.synthetic.experiment import Synthetic
 from nfe.experiments.tpp.experiment import TPP
 
+import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
@@ -25,6 +29,7 @@ parser.add_argument('--data',  type=str, help='Dataset name',
                              'mimic3', 'mimic4', '2dou', #gru-ode-bayes
                              'hawkes1', 'hawkes2', 'poisson', 'renewal', 'reddit', 'mooc', 'lastfm', 'wiki', # tpp
                              'pinwheel', 'earthquake', 'covid', 'bike', # stpp
+                             'speech'
                     ])
 
 # Training loop args

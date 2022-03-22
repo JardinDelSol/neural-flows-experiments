@@ -1,10 +1,10 @@
 import pandas as pd
+import numpy as np
 
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
-from nfe.experiments.gru_ode_bayes.lib.data_utils import ITSDataset
-
+from nfe.experiments.gru_ode_bayes.lib.data_utils import ITSDataset, SPEECHDataset
 
 DATA_DIR = Path('/opt/ml/input/data/training')
 if DATA_DIR.exists():
@@ -12,10 +12,11 @@ if DATA_DIR.exists():
     MIMIC3_FILE = MIMIC4_FILE = DATA_DIR / 'full_dataset.csv'
 else:
     OU_FILE = Path(__file__).parents[2] / 'data/2dou/2dou.csv'
-    MIMIC3_FILE = Path(__file__).parents[2] / 'data/mimic3/mimic3_full_dataset.csv'
+    MIMIC3_FILE = Path(__file__).parents[2] / 'data/mimic3/full_dataset.csv'
     MIMIC4_FILE = Path(__file__).parents[2] / 'data/mimic4/mimic4_full_dataset.csv'
     MIMIC3_FILE_LONG = Path(__file__).parents[2] / 'data/mimic3/mimic3_full_dataset_long.csv'
     MIMIC4_FILE_LONG = Path(__file__).parents[2] / 'data/mimic4/mimic4_full_dataset_long.csv'
+    SPEECH_FILE = Path(__file__).parents[2] / 'data/tpp/speech_commands.npz'
 
 
 def get_OU_data(t_val=4, max_val_samples=1):
@@ -41,6 +42,9 @@ def get_MIMIC_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
     else:
         raise NotImplementedError()
     full_data = full_data.set_index('ID')
+    # print(full_data.dtypes)
+    full_data["Time"] = full_data['Time'].map(lambda x: pd.to_timedelta(x).seconds)
+
     full_data.loc[:, 'Time'] = full_data['Time'] / 1000
 
     value_cols = [c.startswith('Value') for c in full_data.columns]
@@ -66,14 +70,42 @@ def get_MIMIC_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
     train_idx, eval_idx = train_test_split(full_data.index.unique(), test_size=0.3, random_state=0)
     val_idx, test_idx = train_test_split(full_data.loc[eval_idx].index.unique(), test_size=0.5, random_state=0)
 
+    # print(len(full_data.loc[train_idx].index))
+    # exit()
+
+
+
     train = ITSDataset(in_df=full_data.loc[train_idx].reset_index())
     val = ITSDataset(in_df=full_data.loc[val_idx].reset_index(), validation=True, val_options=val_options)
     test = ITSDataset(in_df=full_data.loc[test_idx].reset_index(), validation=True, val_options=val_options)
+
 
     if return_vc:
         return train, val, test, value_cols
     else:
         return train, val, test
+
+def get_speech_data(name, t_val=2.160, max_val_samples=3, return_vc=False):
+    npz = np.load(SPEECH_FILE)
+    train = npz["train_evals"]
+    test = npz["test_evals"]
+    
+    b, t, d = train.shape
+    # train = train.reshape(b * t, d)
+
+    # b, t, d = test.shape
+    # test = test.reshape(b * t, d)
+
+    # print("speech data loaded\n train: ", train.shape, "test", test.shape)
+    
+    val = test
+    value_cols = np.arange(d)
+
+    train = SPEECHDataset(train)
+    val = SPEECHDataset(val)
+    test = SPEECHDataset(test)
+
+    return train, val, test, value_cols
 
 
 def get_MIMIC_data_long(idx, value_cols, name, t_val=2.160, t_stop=3.600, max_val_samples=5):

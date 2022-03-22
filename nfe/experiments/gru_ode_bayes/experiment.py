@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from nfe.experiments.gru_ode_bayes.lib.get_model import get_gob_model
-from nfe.experiments.gru_ode_bayes.lib.get_data import get_OU_data, get_MIMIC_data, get_MIMIC_data_long
+from nfe.experiments.gru_ode_bayes.lib.get_data import get_OU_data, get_MIMIC_data, get_MIMIC_data_long, get_speech_data
 from nfe.experiments.gru_ode_bayes.lib.data_utils import *
 from nfe.experiments.gru_ode_bayes.lib.validate import validate
 
@@ -24,22 +24,31 @@ class GOB(BaseExperiment):
             train, val, test = get_OU_data()
         elif args.data == "mimic3" or args.data == "mimic4":
             train, val, test, value_cols = get_MIMIC_data(args.data, return_vc=True)
+        elif args.data == "speech":
+            train, val, test, value_cols = get_speech_data(args.data, return_vc=True)
         else:
             raise NotImplementedError()
 
-        dl_train = DataLoader(dataset=train, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
-        dl_val = DataLoader(dataset=val, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
-        dl_test = DataLoader(dataset=test, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
+        if not args.data == "speech":
+            dl_train = DataLoader(dataset=train, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
+            dl_val = DataLoader(dataset=val, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
+            dl_test = DataLoader(dataset=test, collate_fn=collate_GOB, shuffle=True, batch_size=args.batch_size)
+        else:
+            dl_train = DataLoader(dataset=train, collate_fn=collate_SPEECH, shuffle=True, batch_size=args.batch_size)
+            dl_val = DataLoader(dataset=val, collate_fn=collate_SPEECH, shuffle=True, batch_size=args.batch_size)
+            dl_test = DataLoader(dataset=test, collate_fn=collate_SPEECH, shuffle=True, batch_size=args.batch_size)
 
         self.test_dataset = test
         self.val_dataset = val
-        self.value_cols = value_cols.columns
+        self.value_cols = value_cols
         self.input_size = train.variable_num
-        self.cov_size = train.init_cov_dim
+        # self.cov_size = train.init_cov_dim
+        self.cov_size = 1
         self.dl_val = dl_val
         self.dl_test = dl_test
 
-        return train.variable_num, 0, dl_train, dl_val, dl_test
+
+        return self.input_size, 0, dl_train, dl_val, dl_test
 
     def training_step(self, b):
         _, loss, _, _, _ = self.model(b['times'], b['num_obs'], b['X'].to(self.device), b['M'].to(self.device),
